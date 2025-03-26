@@ -55,7 +55,7 @@ router.get("/user/:userId", async (req, res) => {
 });
 
 
-// ✅ **Get a Single Shipping Address by ID**
+
 router.get("/id/:id", async (req, res) => {
     try {
         const address = await ShippingAddress.findById(req.params.id);

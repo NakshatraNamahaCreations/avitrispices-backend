@@ -30,27 +30,36 @@ exports.createProduct = (req, res) => {
     }
 
     try {
-      console.log("Request Body:", req.body);
-      console.log(" Uploaded Files:", req.files);
+      const { name, category, category_id, description, details, stock, variants } = req.body;
 
-      const imageUrls = req.files ? req.files.map((file) => file.filename) : [];
+      const imageNames = req.files ? req.files.map((file) => file.filename) : [];
 
-      let { name, category, category_id, price, description, details, stock } = req.body;
+      // Ensure variants is parsed correctly as JSON
+      let parsedVariants = req.body.variants ? JSON.parse(req.body.variants) : [];
 
-      price = parseFloat(price);
-      stock = parseInt(stock, 10);
+      // Validate if all variants have valid prices
+      parsedVariants.forEach((variant, index) => {
+        if (isNaN(variant.price) || variant.price <= 0) {
+          throw new Error(`Invalid price in variant ${index + 1}`);
+        }
+      });
 
       const newProduct = new Product({
-        name, category, category_id, price, description, details, stock, images: imageUrls,
-      
-    });
-    
+        name,
+        category,
+        category_id,
+        description,
+        details,
+        stock,
+        variants: parsedVariants, // Save variants as an array of objects
+        images: imageNames,
+      });
 
       const savedProduct = await newProduct.save();
       return res.status(201).json({ success: true, message: "Product added successfully", product: savedProduct });
 
     } catch (error) {
-      console.error(" Error saving product:", error);
+      console.error("Error saving product:", error);
       res.status(500).json({ success: false, message: "Internal Server Error", error: error.message });
     }
   });
@@ -59,20 +68,27 @@ exports.createProduct = (req, res) => {
 
 
 
-
-
-
 exports.getProducts = async (req, res) => {
   try {
-    const products = await Product.find({}).sort({ createdDate: -1 });
+    const { category } = req.query;
+    const query = category ? { category } : {};
 
-    const productsWithUrls = products.map((product) => ({
-      ...product.toObject(),
-      images: product.images.map((image) => `http://localhost:8080/uploads/${image}`),
-      formattedCreatedDate: product.formattedCreatedDate,
-    }));
+    const products = await Product.find(query).sort({ createdDate: -1 });
 
-    res.status(200).json({ success: true, data: productsWithUrls });
+    const productsWithFixedImages = products.map((product) => {
+      const fixedImages = product.images.map((img) => {
+        const filename = img.split("/").pop(); // extract clean file name
+        return `/uploads/${filename}`; // build clean URL
+      });
+
+      return {
+        ...product.toObject(),
+        images: fixedImages,
+        formattedCreatedDate: product.formattedCreatedDate,
+      };
+    });
+
+    res.status(200).json({ success: true, data: productsWithFixedImages });
   } catch (error) {
     console.error("Error fetching products:", error);
     res.status(500).json({ success: false, message: "Server error" });
@@ -80,10 +96,57 @@ exports.getProducts = async (req, res) => {
 };
 
 
+exports.getProductById = async (req, res) => {
+  const { productId } = req.params; 
+  
 
+  console.log("Fetching product with ID:", productId); 
 
+  try {
+    const product = await Product.findById(productId); 
 
+    if (!product) {
+      return res.status(404).json({ success: false, message: "Product not found" });
+    }
 
+    const fixedImages = product.images.map((img) => `/uploads/${img}`); // Fix image paths for frontend
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        ...product.toObject(),
+        images: fixedImages, // Add images with correct URL format
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching product by ID:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+exports.getProductsByCategory = async (req, res) => {
+  try {
+    const category = req.params.categoryName;
+
+    const products = await Product.find({
+      category: { $regex: new RegExp(`^${category}$`, "i") }, // Case-insensitive match
+    }).sort({ createdDate: -1 });
+
+    const productsWithFixedImages = products.map((product) => {
+      const fixedImages = product.images.map((img) => `/uploads/${img.split("/").pop()}`);
+
+      return {
+        ...product.toObject(),
+        images: fixedImages,
+        formattedCreatedDate: product.formattedCreatedDate,
+      };
+    });
+
+    res.status(200).json({ success: true, data: productsWithFixedImages });
+  } catch (error) {
+    console.error("Error fetching category products:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
 
 
 exports.sellProduct = async (req, res) => {
@@ -112,9 +175,6 @@ exports.sellProduct = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
-
-
-
 exports.updateProduct = async (req, res) => {
   upload(req, res, async (err) => {
     if (err) {
@@ -148,52 +208,24 @@ exports.updateProduct = async (req, res) => {
 };
 
 
-
-exports.getLastFourMaheshwariSarees = async (req, res) => {
-  try {
-    const category = "Maheshwari Cotton Sarees"; 
-
-  
-    const products = await Product.find({ category })
-      .sort({ createdDate: -1 }) // Sort by latest createdDate
-      .limit(4); // Fetch only the last 4 products
-
-    const productsWithUrls = products.map((product) => ({
-      ...product.toObject(),
-      images: product.images.map((image) => `https://api.atoutfashion.com/uploads/${image}`),
-      formattedCreatedDate: product.formattedCreatedDate,
-    }));
-
-    res.status(200).json({ success: true, data: productsWithUrls });
-  } catch (error) {
-    console.error("Error fetching last 4 Maheshwari Sarees:", error);
-    res.status(500).json({ success: false, message: "Server error" });
-  }
-};
-
-
-
 exports.getSoldProducts = async (req, res) => {
   try {
-    // Fetch products where sold count is greater than 1
     const products = await Product.find({ sold: { $gt: 1 } })
-      .sort({ sold: -1 }) // Sort by highest sold count
-      .limit(10); // Limit to last 10 sold products (you can change this if needed)
+      .sort({ sold: -1 })
+      .limit(10);
 
-    const productsWithUrls = products.map((product) => ({
+    const productsWithFilenames = products.map((product) => ({
       ...product.toObject(),
-      images: product.images.map((image) => `https://api.atoutfashion.com/uploads/${image}`),
+      images: product.images.map((image) => path.basename(image)), // Only return filename
       formattedCreatedDate: product.formattedCreatedDate,
     }));
 
-    res.status(200).json({ success: true, data: productsWithUrls });
+    res.status(200).json({ success: true, data: productsWithFilenames });
   } catch (error) {
     console.error("Error fetching sold products:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
-
-
 
 exports.deleteProduct = async (req, res) => {
   try {

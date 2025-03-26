@@ -5,18 +5,21 @@ const productSchema = new mongoose.Schema({
   name: { type: String, required: true },
   category: { type: String, required: true },
   category_id: String,
-  status: { type: String, default: "Active" },
   description: { type: String },
-  price: { type: Number, required: true },
   images: { type: [String], default: [] },
-  color: { type: String },
-  material: { type: String },
-  details: { type: String },
-  stock: { type: Number, required: true, min: 0 },
-  sold: { type: Number, default: 0 },
+  stock: { type: Number, required: true },
+  variants: [{
+    quantity: { type: String, required: true },
+    price: { type: Number, required: true }  
+  }],
   createdDate: { type: Date, default: Date.now },
   sku: { type: String, default: () => `SKU-${Date.now()}` }, 
+
 });
+
+
+
+
 
 
 // Virtual fields
