@@ -175,6 +175,8 @@ exports.sellProduct = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
+
 exports.updateProduct = async (req, res) => {
   upload(req, res, async (err) => {
     if (err) {
@@ -191,21 +193,33 @@ exports.updateProduct = async (req, res) => {
         return res.status(404).json({ success: false, message: "Product not found" });
       }
 
+      // Ensure variants are parsed correctly
+      let parsedVariants = req.body.variants ? JSON.parse(req.body.variants) : product.variants;
+
+      // Validate the variants
+      parsedVariants.forEach((variant, index) => {
+        if (isNaN(variant.price) || variant.price <= 0) {
+          throw new Error(`Invalid price in variant ${index + 1}`);
+        }
+      });
+
       const imageUrls = req.files.length ? req.files.map((file) => file.filename) : product.images;
 
       const updatedProduct = await Product.findByIdAndUpdate(
         productId,
-        { ...req.body, images: imageUrls },
+        { ...req.body, variants: parsedVariants, images: imageUrls },
         { new: true }
       );
 
       res.status(200).json({ success: true, data: updatedProduct });
     } catch (error) {
       console.error("Error updating product:", error);
-      res.status(500).json({ success: false, message: "Server error" });
+      return res.status(500).json({ success: false, message: "Server error", error: error.message });
     }
   });
 };
+
+
 
 
 exports.getSoldProducts = async (req, res) => {
