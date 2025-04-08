@@ -19,7 +19,14 @@ const storage = multer.diskStorage({
   },
 });
 
-const upload = multer({ storage }).array("images", 5); 
+// const upload = multer({ storage }).array("images", 5); 
+const upload = multer({
+  storage,
+  limits: {
+    fileSize: 50 * 1024 * 1024, 
+  },
+}).array("images", 5); 
+
 
 
 exports.createProduct = (req, res) => {
@@ -64,8 +71,6 @@ exports.createProduct = (req, res) => {
     }
   });
 };
-
-
 
 
 exports.getProducts = async (req, res) => {

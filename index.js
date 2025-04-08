@@ -31,8 +31,8 @@ app.options("*", (req, res) => {
 });
 
 
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ limit: "10mb", extended: true }));
+app.use(express.json({ limit: "30mb" }));
+app.use(express.urlencoded({ limit: "30mb", extended: true }));
 
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
@@ -72,25 +72,27 @@ mongoose.connection.on("disconnected", () => {
 
 const categoryRoutes = require("./routes/categoryRoutes");
 const productRoutes = require("./routes/productRoutes");
-// const bannerRoutes = require("./routes/bannerRoutes");
 const orderRoutes = require("./routes/ordersRoutes");
 const customerRoutes = require("./routes/customerRoutes");
 const shippingAddressRoutes = require("./routes/shippingAddressRoutes"); 
-// const wishlistRoutes = require('./routes/wishlistRoutes');
-// const voucher = require('./routes/voucher');
-// const reviewRoutes = require("./routes/reviewRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const phonepeRoutes = require('./routes/phonepeRoutes');
+const emailRoutes = require("./routes/emailRoutes");
+const contactFormRoutes = require("./routes/contactFormRoutes");
+const subscribeRoutes = require("./routes/subscribeRoutes");
 
 app.use("/api/", productRoutes);
 app.use("/api/shipping-address", shippingAddressRoutes); 
 app.use("/api/categories", categoryRoutes);
-// app.use("/api/", bannerRoutes);
+
 app.use("/api/orders", orderRoutes);
 app.use("/api/customers", customerRoutes);
-// app.use('/api', wishlistRoutes);
-// app.use('/api', voucher)
-// app.use("/api", reviewRoutes); 
+
 app.use("/api/admin", adminRoutes);
+app.use('/api/phonepe', phonepeRoutes);
+app.use("/api/email", emailRoutes);
+app.use("/api/contact-form", contactFormRoutes);
+app.use("/api/subscribe", subscribeRoutes);
 
 app.use((req, res, next) => {
   res.status(404).json({ error: "Route not found" });
