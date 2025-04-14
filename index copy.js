@@ -5,6 +5,8 @@ const path = require("path");
 const mongoose = require("mongoose");
 
 
+
+
 dotenv.config();
 
 
@@ -80,7 +82,7 @@ const phonepeRoutes = require('./routes/phonepeRoutes');
 const emailRoutes = require("./routes/emailRoutes");
 const contactFormRoutes = require("./routes/contactFormRoutes");
 const subscribeRoutes = require("./routes/subscribeRoutes");
-const blogRoutes = require("./routes/blogRoutes");
+// const blogRoutes = require("./routes/blogRoutes");
 
 app.use("/api/", productRoutes);
 app.use("/api/shipping-address", shippingAddressRoutes); 
@@ -92,12 +94,12 @@ app.use('/api/phonepe', phonepeRoutes);
 app.use("/api/email", emailRoutes);
 app.use("/api/contact-form", contactFormRoutes);
 app.use("/api/subscribe", subscribeRoutes);
-app.use("/api/blogs", blogRoutes);
+// app.use("/api/blogs", blogRoutes);
 
 app.use((req, res, next) => {
   res.status(404).json({ error: "Route not found" });
 });
-
+app.use("/api/blogs", blogRoutes);
 
 const PORT = process.env.PORT || 8010;
 app.listen(PORT, () => {

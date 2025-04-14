@@ -106,7 +106,7 @@ exports.forgotPassword = async (req, res) => {
         },
       });
   
-      const resetLink = `http://localhost:3000/reset-password/${token}`;
+      const resetLink = `https://avitrispices.in/reset-password/${token}`;
   
       const mailOptions = {
         from: process.env.MAIL_USER,
