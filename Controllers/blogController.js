@@ -1,7 +1,7 @@
-import Blog from '../models/blogModel.js';
-import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
+const Blog = require('../models/blogmodel');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 
 // Multer setup
 const storage = multer.diskStorage({
@@ -27,10 +27,10 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-export const uploadBlogImage = multer({ storage, fileFilter }).single('image');
+const uploadBlogImage = multer({ storage, fileFilter }).single('image');
 
 // Create blog
-export const createBlog = async (req, res) => {
+const createBlog = async (req, res) => {
   try {
     const { title, description, metaTitle, metaDescription } = req.body;
     const image = req.file?.filename;
@@ -48,10 +48,8 @@ export const createBlog = async (req, res) => {
   }
 };
 
-
-
 // Update blog
-export const updateBlog = async (req, res) => {
+const updateBlog = async (req, res) => {
   try {
     const { title, description, metaTitle, metaDescription } = req.body;
     let updateData = { title, description, metaTitle, metaDescription };
@@ -68,9 +66,8 @@ export const updateBlog = async (req, res) => {
   }
 };
 
-
 // Delete blog
-export const deleteBlog = async (req, res) => {
+const deleteBlog = async (req, res) => {
   try {
     const blog = await Blog.findByIdAndDelete(req.params.id);
     if (!blog) return res.status(404).json({ message: "Blog not found" });
@@ -80,9 +77,8 @@ export const deleteBlog = async (req, res) => {
   }
 };
 
-
 // Get all blogs
-export const getAllBlogs = async (req, res) => {
+const getAllBlogs = async (req, res) => {
   try {
     const blogs = await Blog.find().sort({ createdAt: -1 });
     res.status(200).json(blogs);
@@ -91,10 +87,10 @@ export const getAllBlogs = async (req, res) => {
   }
 };
 
-
-export const getBlogById = async (req, res) => {
+// Get blog by title
+const getBlogById = async (req, res) => {
   try {
-    const decodedTitle = decodeURIComponent(req.params.title); // <- decode the title
+    const decodedTitle = decodeURIComponent(req.params.title);
     const blog = await Blog.findOne({ title: decodedTitle });
     if (!blog) return res.status(404).json({ message: 'Blog not found' });
     res.status(200).json(blog);
@@ -103,4 +99,11 @@ export const getBlogById = async (req, res) => {
   }
 };
 
-
+module.exports = {
+  uploadBlogImage,
+  createBlog,
+  updateBlog,
+  deleteBlog,
+  getAllBlogs,
+  getBlogById
+};
